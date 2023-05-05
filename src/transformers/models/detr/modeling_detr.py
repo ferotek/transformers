@@ -2102,10 +2102,10 @@ class DetrLoss(nn.Module):
         num_boxes = sum(len(t["class_labels"]) for t in targets)
         num_boxes = torch.as_tensor([num_boxes], dtype=torch.float, device=next(iter(outputs.values())).device)
         # (Niels): comment out function below, distributed training to be added
-        # if is_dist_avail_and_initialized():
-        #     torch.distributed.all_reduce(num_boxes)
+        if is_dist_avail_and_initialized():
+            torch.distributed.all_reduce(num_boxes)
         # (Niels) in original implementation, num_boxes is divided by get_world_size()
-        num_boxes = torch.clamp(num_boxes, min=1).item()
+        num_boxes = torch.clamp(num_boxes / 4, min=1).item()
 
         # Compute all the requested losses
         losses = {}
