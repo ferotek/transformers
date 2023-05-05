@@ -69,6 +69,11 @@ def is_dist_avail_and_initialized():
         return False
     return True
 
+def get_world_size():
+    if not is_dist_avail_and_initialized():
+        return 1
+    return dist.get_world_size()
+
 
 @dataclass
 class DetrDecoderOutput(BaseModelOutputWithCrossAttentions):
@@ -2114,7 +2119,7 @@ class DetrLoss(nn.Module):
         if is_dist_avail_and_initialized():
             torch.distributed.all_reduce(num_boxes)
         # (Niels) in original implementation, num_boxes is divided by get_world_size()
-        num_boxes = torch.clamp(num_boxes / 4, min=1).item()
+        num_boxes = torch.clamp(num_boxes / get_world_size(), min=1).item()
 
         # Compute all the requested losses
         losses = {}
